@@ -14,10 +14,10 @@ CMD ["yarn", "dev"]
 FROM node:lts-bullseye-slim as prod
 
 WORKDIR /app
-COPY ./ /ap
+COPY ./ /app
 
 RUN yarn
-RUN yarn build
+# RUN yarn build
 
 EXPOSE 3000
 
