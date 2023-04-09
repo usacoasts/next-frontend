@@ -5,10 +5,8 @@ COPY ./ /app
 
 RUN yarn
 
-# Expose the port the app will run on
 EXPOSE 3000
 
-# Start the app
 CMD ["yarn", "dev"]
 
 FROM node:lts-bullseye-slim as prod
