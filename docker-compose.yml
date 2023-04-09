@@ -1,0 +1,15 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: prod        # 本番用
+      # target: dev       # 開発用
+    tty: true
+    volumes:
+      - ./app:/app
+    ports:
+      - "5577:3000"
+    # If you want to run `yarn dev` at docker compose startup
+    # command: sh -c "yarn dev"
