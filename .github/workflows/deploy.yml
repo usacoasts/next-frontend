@@ -1,0 +1,72 @@
+name: deploy
+
+on:
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: app
+          file: ./Dockerfile
+          target: prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  update-manifest:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout usacoasts/bff-sample-manifest
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_GITHUB_TOKEN }}
+          repository: usacoasts/bff-sample-manifest
+          ref: main # ブランチ名
+      - name: Update manifest file
+        env:
+          YAML_PATH: manifest/next-frontend-deployment.yaml
+          CONTAINER_NAME: next-frontend
+          IMAGE_FULL_NAME: ${{ needs.build-and-push-image.outputs.tags }}
+        run: |
+          yq e -i "(.spec.template.spec.containers[]|select(.name == \"${CONTAINER_NAME}\").image)|=\"${IMAGE_FULL_NAME}\"" ${YAML_PATH}
+          cat ${YAML_PATH}
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.REPO_GITHUB_TOKEN }} # 発行したtokenをnext-frontend-v5-alphaにActions Secretsとして追加
+          title: "Update next-frontend"
+          base: main # ブランチ名
+          draft: False
+          body: |
+            # Changes
+            - Update `next-frontend` image
