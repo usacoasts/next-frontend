@@ -1,7 +1,7 @@
 FROM node:lts-bullseye-slim as dev
 
 WORKDIR /app
-COPY app .
+COPY ./app ./
 
 RUN yarn
 RUN yarn build
@@ -13,7 +13,7 @@ CMD ["yarn", "dev"]
 FROM node:lts-bullseye-slim as prod
 
 WORKDIR /app
-COPY app .
+COPY ./app ./
 
 RUN yarn
 RUN yarn build
