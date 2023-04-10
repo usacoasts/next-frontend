@@ -3,7 +3,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./app/Dockerfile
       target: prod        # 本番用
       # target: dev       # 開発用
     tty: true
